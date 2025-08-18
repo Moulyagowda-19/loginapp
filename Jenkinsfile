@@ -10,19 +10,13 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                sh '''
-                    cd loginapp
-                    docker compose build
-                '''
+                sh 'docker compose build'
             }
         }
 
         stage('Run Containers') {
             steps {
-                sh '''
-                    cd loginapp
-                    docker compose up -d
-                '''
+                sh 'docker compose up -d'
             }
         }
 
@@ -41,10 +35,7 @@ pipeline {
 
     post {
         always {
-            sh '''
-                cd loginapp
-                docker compose down
-            '''
+            sh 'docker compose down'
         }
     }
 }
