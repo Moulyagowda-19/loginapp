@@ -17,6 +17,9 @@ pipeline {
 
                 echo "🚀 Rebuilding and starting containers..."
                 docker compose up -d --build
+
+                echo "📋 Current container status:"
+                docker compose ps
                 '''
             }
         }
@@ -27,7 +30,7 @@ pipeline {
                     def retries = 10
                     def success = false
                     for (int i = 0; i < retries; i++) {
-                        if (sh(script: "docker exec loginapp-mongo-1 mongosh --eval 'db.runCommand({ ping: 1 })' > /dev/null 2>&1", returnStatus: true) == 0) {
+                        if (sh(script: 'docker compose exec -T mongo mongosh --eval "db.runCommand({ ping: 1 })"', returnStatus: true) == 0) {
                             echo "✅ MongoDB is up!"
                             success = true
                             break
@@ -90,7 +93,7 @@ pipeline {
 
     post {
         always {
-            echo "🎉 Pipeline finished!"
+            echo "Pipeline finished!"
         }
     }
 }
