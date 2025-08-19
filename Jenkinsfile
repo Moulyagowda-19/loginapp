@@ -1,52 +1,51 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_COMPOSE_FILE = "docker-compose.yml"
-    }
-
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Moulyagowda-19/loginapp.git', credentialsId: 'github-credentials'
+                git branch: 'main',
+                    url: 'https://github.com/Moulyagowda-19/loginapp.git'
             }
         }
 
-        stage('Clean Existing Containers') {
+        stage('Build & Deploy Containers') {
             steps {
-                sh 'docker compose down || true'
-            }
-        }
+                sh '''
+                echo "🛑 Stopping old containers..."
+                docker compose down || true
 
-        stage('Build Docker Images') {
-            steps {
-                sh 'docker compose build'
-            }
-        }
-
-        stage('Run Containers') {
-            steps {
-                sh 'docker compose up -d'
+                echo "🚀 Rebuilding and starting containers..."
+                docker compose up -d --build
+                '''
             }
         }
 
         stage('Verify Backend') {
             steps {
-                sh 'curl -f http://localhost:5000/api/hello || echo "Backend not ready yet"'
+                script {
+                    def retries = 10
+                    def success = false
+                    for (int i = 0; i < retries; i++) {
+                        if (sh(script: "curl -s http://localhost:5000/api/hello", returnStatus: true) == 0) {
+                            echo "✅ Backend is up!"
+                            success = true
+                            break
+                        } else {
+                            echo "⏳ Backend not ready yet, retrying in 5s..."
+                            sleep 5
+                        }
+                    }
+                    if (!success) {
+                        error "❌ Backend did not become ready."
+                    }
+                }
             }
         }
 
         stage('Verify Frontend') {
             steps {
-                sh 'curl -f http://localhost:3000 || echo "Frontend not ready yet"'
-            }
-        }
-    }
-
-    post {
-        always {
-            echo "Pipeline finished. You can leave containers running or stop them manually."
-        }
-    }
-}
+                script {
+                    def retries = 10
+                    def success = false
 
