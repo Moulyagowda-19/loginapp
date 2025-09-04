@@ -32,10 +32,20 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com:587
+      - GF_SMTP_USER=grafana.alerts@gmail.com      # 👈 sender Gmail (tomorrow you’ll create this)
+      - GF_SMTP_PASSWORD=APP_PASSWORD_HERE         # 👈 paste tomorrow
+      - GF_SMTP_SKIP_VERIFY=true
+      - GF_SMTP_FROM_ADDRESS=grafana.alerts@gmail.com
+      - GF_SMTP_FROM_NAME=GrafanaAlerts
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     ports:
       - "3001:3000"
+    depends_on:
+      - prometheus
 
   node-exporter:
     image: prom/node-exporter

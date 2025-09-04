@@ -89,11 +89,64 @@ pipeline {
                 }
             }
         }
+
+        stage('Verify Prometheus') {
+            steps {
+                script {
+                    def retries = 10
+                    def success = false
+                    for (int i = 0; i < retries; i++) {
+                        if (sh(script: "curl -s http://localhost:9090/-/ready", returnStatus: true) == 0) {
+                            echo "✅ Prometheus is up!"
+                            success = true
+                            break
+                        } else {
+                            echo "⏳ Prometheus not ready yet, retrying in 5s..."
+                            sleep 5
+                        }
+                    }
+                    if (!success) {
+                        error "❌ Prometheus did not become ready."
+                    }
+                }
+            }
+        }
+
+        stage('Verify Grafana & Provision Slack') {
+            steps {
+                script {
+                    def retries = 10
+                    def success = false
+                    for (int i = 0; i < retries; i++) {
+                        if (sh(script: "curl -s http://localhost:3001/login", returnStatus: true) == 0) {
+                            echo "✅ Grafana is up!"
+                            success = true
+                            break
+                        } else {
+                            echo "⏳ Grafana not ready yet, retrying in 5s..."
+                            sleep 5
+                        }
+                    }
+                    if (!success) {
+                        error "❌ Grafana did not become ready."
+                    }
+
+                    echo "📦 Copying Slack provisioning file into Grafana container..."
+                    sh '''
+                    GRAFANA_ID=$(docker ps -qf "name=grafana")
+                    docker cp grafana/provisioning/alerting/contact-points.yaml $GRAFANA_ID:/etc/grafana/provisioning/alerting/
+                    docker restart $GRAFANA_ID
+                    '''
+                }
+            }
+        }
     }
 
     post {
         always {
-            echo "Pipeline finished!"
+            echo "🧹 Cleaning up... Pipeline finished!"
+            // comment this line if you want containers to keep running
+            // sh 'docker compose down'
         }
     }
 }
