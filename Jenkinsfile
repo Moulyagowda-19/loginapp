@@ -92,10 +92,10 @@ pipeline {
             steps {
                 script {
                     // Wait up to 2 minutes (24 retries × 5s = 120s)
-                    def retries = 24
+                    def retries = 48
                     def success = false
                     for (int i = 0; i < retries; i++) {
-                        if (sh(script: "curl -s http://localhost:3001/login", returnStatus: true) == 0) {
+                        if (sh(script: "curl -s http://localhost:3001/api/health", returnStatus: true) == 0) {
                             echo "✅ Grafana is up!"
                             success = true
                             break
