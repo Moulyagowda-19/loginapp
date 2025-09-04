@@ -29,7 +29,7 @@ pipeline {
         stage('Verify MongoDB') {
             steps {
                 script {
-                    def retries = 5
+                    def retries = 10
                     def success = false
                     for (int i = 0; i < retries; i++) {
                         def result = sh(
