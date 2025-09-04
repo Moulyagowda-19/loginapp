@@ -2,11 +2,12 @@ apiVersion: 1
 
 groups:
   - name: TestAlerts
+    folder: General
     interval: 1m
     rules:
       - uid: high-cpu
         title: High CPU Usage
-        condition: C
+        condition: A > 60
         data:
           - refId: A
             datasourceUid: prometheus
@@ -23,3 +24,4 @@ groups:
           description: "System CPU usage has crossed 60% for more than 1 minute."
         labels:
           severity: warning
+
