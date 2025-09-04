@@ -95,7 +95,7 @@ pipeline {
                     def retries = 72
                     def success = false
                     for (int i = 0; i < retries; i++) {
-			def status = sh(script: "curl -s -o /tmp/grafana_health.json -w '%{http_code}' http://localhost:3001/api/health", returnStdout: true).trim()
+			def status = sh(script: "curl -s -o /tmp/grafana_health.json -w '%{http_code}' http://localhost:3001/api/health || true", returnStdout: true).trim()
                         if (status =="200") {
                             echo "✅ Grafana is healthy!"
 			    sh "cat /tmp/grafana_health.json"
