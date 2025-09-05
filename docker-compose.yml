@@ -3,6 +3,7 @@ version: '3.9'
 services:
   mongo:
     image: mongo
+    container_name: mongo 
     restart: always
     volumes:
       - mongo-data:/data/db
