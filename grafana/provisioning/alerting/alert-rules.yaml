@@ -1,27 +1,52 @@
 apiVersion: 1
 
 groups:
-  - name: TestAlerts
-    folder: General
-    interval: 1m
+  - name: CPU_Usage_Alerts
+    folder: "Custom Alerts V2"   # Quoted because of space
+    interval: 10s
     rules:
-      - uid: high-cpu
-        title: High CPU Usage
-        condition: A > 60
+      - uid: cpu-alert
+        title: CPU Usage High
+        condition: D
         data:
           - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
             datasourceUid: prometheus
             model:
-              expr: avg(rate(node_cpu_seconds_total{mode="system"}[1m])) * 100
-              interval: ""
-              legendFormat: CPU Usage
+              expr: node_cpu_seconds_total
               instant: false
-        noDataState: Alerting
-        execErrState: Alerting
-        for: 1m
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: avg by(instance) (rate(node_cpu_seconds_total[1m]))
+          - refId: C
+            type: reduce
+            datasourceUid: __expr__
+            model:
+              expression: B
+              reducer: avg
+              settings:
+                mode: mean
+          - refId: D
+            type: threshold
+            datasourceUid: __expr__
+            model:
+              expression: C
+              conditions:
+                - evaluator:
+                    params:
+                      - 0.6
+                    type: gt
+                  operator:
+                    type: and
+                  reducer:
+                    type: avg
+                  type: query
         annotations:
-          summary: "CPU usage > 60%"
-          description: "System CPU usage has crossed 60% for more than 1 minute."
-        labels:
-          severity: warning
+          summary: "CPU usage is above 60%"
 

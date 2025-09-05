@@ -1,9 +1,9 @@
 apiVersion: 1
 
 contactPoints:
-  - name: "gmail-alerts"
-    type: email
-    uid: gmail-contact
-    settings:
-      addresses: "navi25231@gmail.com"   # 👈 the inbox where you want alerts
-
+  - name: gmail-alert
+    receivers:
+      - uid: gmail-alert
+        type: email
+        settings:
+          addresses: navi25231@gmail.com

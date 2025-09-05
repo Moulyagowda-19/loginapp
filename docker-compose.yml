@@ -1,22 +1,42 @@
+version: '3.9'
+
 services:
+  mongo:
+    image: mongo
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "pgrep", "mongod"]
+      interval: 10s
+      timeout: 5s
+      retries: 30   # ~5 minutes max wait
+
   backend:
     build: ./backend
     ports:
       - "5000:5000"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/hello"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
   frontend:
     build: ./frontend
     ports:
       - "3000:3000"
-
-  mongo:
-    image: mongo
-    restart: always
-    # Removed ports: 27017:27017, only internal access
-    volumes:
-      - mongo-data:/data/db
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
   prometheus:
     image: prom/prometheus
@@ -25,6 +45,11 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:9090/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
 
   grafana:
     image: grafana/grafana
@@ -34,8 +59,8 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SMTP_ENABLED=true
       - GF_SMTP_HOST=smtp.gmail.com:587
-      - GF_SMTP_USER=grafana.alerts@gmail.com      # 👈 sender Gmail (tomorrow you’ll create this)
-      - GF_SMTP_PASSWORD=APP_PASSWORD_HERE         # 👈 paste tomorrow
+      - GF_SMTP_USER=grafana121@gmail.com
+      - GF_SMTP_PASSWORD=schpjjnzgrobqafb   # App Password from Gmail
       - GF_SMTP_SKIP_VERIFY=true
       - GF_SMTP_FROM_ADDRESS=grafana.alerts@gmail.com
       - GF_SMTP_FROM_NAME=GrafanaAlerts
@@ -45,7 +70,13 @@ services:
     ports:
       - "3001:3000"
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
   node-exporter:
     image: prom/node-exporter
@@ -54,6 +85,6 @@ services:
       - "9100:9100"
 
 volumes:
-  grafana-data:
   mongo-data:
+  grafana-data:
 

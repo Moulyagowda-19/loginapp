@@ -1,0 +1,9 @@
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: gmail-alert
+    group_by:
+      - alertname
+    continue: false
+
