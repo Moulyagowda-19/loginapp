@@ -2,7 +2,7 @@ apiVersion: 1
 
 groups:
   - name: CPU_Usage_Alerts
-    folder: "Custom Alerts V2"   # Quoted because of space
+    folder: "Custom Alerts V2"
     interval: 10s
     rules:
       - uid: cpu-alert
@@ -17,36 +17,44 @@ groups:
             model:
               expr: node_cpu_seconds_total
               instant: false
+              format: time_series
+              intervalMs: 15000
+              interval: ""
+              legendFormat: ""
+              step: 15
           - refId: B
             relativeTimeRange:
               from: 600
               to: 0
             datasourceUid: prometheus
             model:
-              expr: avg by(instance) (rate(node_cpu_seconds_total[1m]))
+              expr: (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[1m]))) * 100
+              instant: false
+              format: time_series
+              intervalMs: 15000
+              interval: ""
+              legendFormat: ""
+              step: 15
           - refId: C
-            type: reduce
             datasourceUid: __expr__
             model:
+              type: reduce
               expression: B
               reducer: avg
               settings:
                 mode: mean
           - refId: D
-            type: threshold
             datasourceUid: __expr__
             model:
+              type: threshold
               expression: C
               conditions:
                 - evaluator:
                     params:
-                      - 0.6
+                      - 80
                     type: gt
                   operator:
                     type: and
                   reducer:
                     type: avg
-                  type: query
-        annotations:
-          summary: "CPU usage is above 60%"
 
